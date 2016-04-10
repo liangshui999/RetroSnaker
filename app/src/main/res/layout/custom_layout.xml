@@ -7,43 +7,88 @@
         android:id="@+id/fram_buf"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1">
+        android:layout_weight="1"
+        android:background="@mipmap/bj1">
     </FrameLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
 
-        <RelativeLayout
-            android:layout_width="match_parent"
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:layout_margin="5dp"
             >
+            <!-- 记分器-->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/score"
+                    android:textSize="20sp"
+                    android:layout_marginTop="5dp"
+                    android:layout_gravity="left"
+                    />
+                <TextView
+                    android:id="@+id/text_score"
+                    android:text="@string/score_value"
+                    android:textSize="20sp"
+                    android:layout_marginTop="3dp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+            </LinearLayout>
 
-            <Button
-                android:id="@+id/img_up"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:background="@drawable/shang"
-                android:layout_centerHorizontal="true"
-                />
-            <Button
-                android:id="@+id/img_left"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_below="@id/img_up"
-                android:layout_toLeftOf="@id/img_up"
-                android:background="@drawable/zuo"/>
-            <Button
-                android:id="@+id/img_right"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_below="@id/img_up"
-                android:layout_toRightOf="@id/img_up"
-                android:background="@drawable/you"/>
-            <Button
-                android:id="@+id/img_down"
-                android:layout_width="50dp"
-                android:layout_height="50dp"
-                android:layout_below="@id/img_left"
-                android:layout_toRightOf="@id/img_left"
-                android:background="@drawable/xia"/>
 
-        </RelativeLayout>
+        </LinearLayout>
+
+
+        <!-- 上下左右按钮-->
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="wrap_content">
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                >
+
+                <Button
+                    android:id="@+id/img_up"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:background="@drawable/shang"
+                    android:layout_centerHorizontal="true"
+                    />
+                <Button
+                    android:id="@+id/img_left"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_below="@id/img_up"
+                    android:layout_toLeftOf="@id/img_up"
+                    android:background="@drawable/zuo"/>
+                <Button
+                    android:id="@+id/img_right"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_below="@id/img_up"
+                    android:layout_toRightOf="@id/img_up"
+                    android:background="@drawable/you"/>
+                <Button
+                    android:id="@+id/img_down"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
+                    android:layout_below="@id/img_left"
+                    android:layout_toRightOf="@id/img_left"
+                    android:background="@drawable/xia"/>
+
+            </RelativeLayout>
+        </LinearLayout>
+
+    </LinearLayout>
+
 
 </LinearLayout>

@@ -2,17 +2,24 @@ package com.example.asus_cp.retrosnaker;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.res.AssetFileDescriptor;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
+import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.TextView;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -32,6 +39,7 @@ public class CanvasTest extends Activity{
     @Bind(R.id.img_left) Button imgLeft;
     @Bind(R.id.img_right) Button imgRight;
     @Bind(R.id.img_down) Button imgDown;
+    @Bind(R.id.text_score) TextView textScore;//显示分数的textview
     private View v;//画布
     private int radios=10;//半径
 
@@ -54,11 +62,29 @@ public class CanvasTest extends Activity{
     //定时发送消息的handler
     private MyHandler myHandler;
 
+    //记录总分的变量
+    private int score;
+    //每吃到一次食物加的分数
+    private int eatScore;
 
+    //每个多长时间重绘一次
+    private int time;
 
     public static final int DING_SHI=1;//定时任务的标记（用于发送消息）
     public static final int ORITATION_CHANGED=2;//方向改变的标记(用于发送消息)
     public static final int FOOD_HAVE_EATED=3;//食物被吃了之后发送的消息的标记（请求重新生成一个食物）
+    public static final int RESTART=4;//再来一次发送的消息
+
+    private String tag="CanvasTest";
+
+    //存储音乐地址的集合
+    private List<Integer>musics;
+
+    //全局的音乐播放器
+    private MediaPlayer mediaPlayer;
+
+    //集合里面音乐的索引
+    private int musicIndex;
 
 
 
@@ -73,7 +99,7 @@ public class CanvasTest extends Activity{
                     framBuf.addView(v);
                     //移动蛇头和蛇身的坐标
                     move(snakeHead.getOritation());
-                    myHandler.sendEmptyMessageDelayed(DING_SHI,1000);//定时发送延迟的消息
+                    myHandler.sendEmptyMessageDelayed(DING_SHI,time);//定时发送延迟的消息
                     break;
                 case ORITATION_CHANGED://方向改变
                     //移动蛇头和蛇身的坐标
@@ -89,6 +115,13 @@ public class CanvasTest extends Activity{
                     framBuf.removeAllViews();
                     v=new CustumView(CanvasTest.this);
                     framBuf.addView(v);
+                    break;
+                case RESTART://再来一次
+                    //重新绘图
+                    framBuf.removeAllViews();
+                    v=new CustumView(CanvasTest.this);
+                    framBuf.addView(v);
+                    break;
             }
         }
     }
@@ -106,19 +139,67 @@ public class CanvasTest extends Activity{
     public void init(){
         v=new CustumView(this);
         framBuf.addView(v);
-        xMin=radios;
-        yMin=radios;
-        xMax=v.getWidth()-radios;
-        yMax=v.getHeight()-radios;
+        xMin=radios*3;
+        yMin=radios*3;
+        framBuf.post(new Runnable() {//必须通过这个方法获取宽和高，不然获取到的是空的
+            @Override
+            public void run() {
+                xMax = framBuf.getWidth() - radios * 3;
+                yMax = framBuf.getHeight() - radios * 3;
+                Log.d(tag, "xMax=" + xMax);
+                Log.d(tag, "yMax=" + yMax);
+                xMax=xMax/radios*radios;//这样处理之后xMax是radios的整数倍
+                yMax=yMax/radios*radios;
+            }
+        });
         sPoints=new ArrayList<SnakePoint>();
-        snakeHead=new SnakePoint(radios,radios,SnakePoint.RIGHT);
+        snakeHead=new SnakePoint(radios*8,radios*30,SnakePoint.RIGHT);
 
-        produceSnakePositon();
-        foodPoint=new FoodPoint();
-        produceFoodPosition();//随机生成的食物位置
+        //produceSnakePositon();
+        foodPoint=new FoodPoint(radios*20,radios*10);
+       // produceFoodPosition();//随机生成的食物位置
+        eatScore=10;//每吃到一个食物加10分
+        time=1000;
         myHandler=new MyHandler();
         myHandler.sendEmptyMessage(DING_SHI);
+        musics=new ArrayList<Integer>();
+        musics.add(R.raw.m1);
+        musics.add(R.raw.m2);
+        mediaPlayer=MediaPlayer.create(this,musics.get(musicIndex++));
+        mediaPlayer.start();
+        mediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+            @Override
+            public void onCompletion(MediaPlayer mp) {
+                Log.d(tag,"音乐执行的次数");
+                mp.reset();
+                if(musicIndex<musics.size()){
+                    AssetFileDescriptor file = getResources().openRawResourceFd(
+                            musics.get(musicIndex++));
+                    try {
+                        mp.setDataSource(file.getFileDescriptor());
+                        mp.start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Log.d(tag,e.toString());
+                    }
+                }else{
+                    musicIndex=0;
+                    AssetFileDescriptor file = getResources().openRawResourceFd(
+                            musics.get(musicIndex++));
+                    try {
+                        mp.setDataSource(file.getFileDescriptor());
+                        mp.start();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        Log.d(tag, e.toString());
+                    }
+
+                }
+
+            }
+        });
     }
+
 
 
     /**
@@ -268,9 +349,11 @@ public class CanvasTest extends Activity{
                     firstPoint.setX(snakeHead.getX());
                     firstPoint.setY(snakeHead.getY());
                     firstPoint.setOritation(snakeHead.getOritation());
-                    sPoints.add(0,firstPoint);//在集合的头部添加一个点
+                    sPoints.add(0, firstPoint);//在集合的头部添加一个点
                     int temp=snakeHead.getY();
                     snakeHead.setY(temp-radios);
+                    score=score+eatScore;
+                    textScore.setText(score+"");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);//食物别吃了之后发送的消息
                 }
                 break;
@@ -280,9 +363,11 @@ public class CanvasTest extends Activity{
                     firstPoint.setX(snakeHead.getX());
                     firstPoint.setY(snakeHead.getY());
                     firstPoint.setOritation(snakeHead.getOritation());
-                    sPoints.add(0,firstPoint);//在集合的头部添加一个点
+                    sPoints.add(0, firstPoint);//在集合的头部添加一个点
                     int temp=snakeHead.getY();
-                    snakeHead.setY(temp+radios);
+                    snakeHead.setY(temp + radios);
+                    score=score+eatScore;
+                    textScore.setText(score+"");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);
                 }
                 break;
@@ -292,9 +377,11 @@ public class CanvasTest extends Activity{
                     firstPoint.setX(snakeHead.getX());
                     firstPoint.setY(snakeHead.getY());
                     firstPoint.setOritation(snakeHead.getOritation());
-                    sPoints.add(0,firstPoint);//在集合的头部添加一个点
-                    int temp=snakeHead.getX();
-                    snakeHead.setY(temp-radios);
+                    sPoints.add(0, firstPoint);//在集合的头部添加一个点
+                    int temp = snakeHead.getX();
+                    snakeHead.setX(temp - radios);
+                    score=score+eatScore;
+                    textScore.setText(score+"");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);
                 }
                 break;
@@ -304,9 +391,11 @@ public class CanvasTest extends Activity{
                     firstPoint.setX(snakeHead.getX());
                     firstPoint.setY(snakeHead.getY());
                     firstPoint.setOritation(snakeHead.getOritation());
-                    sPoints.add(0,firstPoint);//在集合的头部添加一个点
-                    int temp=snakeHead.getX();
-                    snakeHead.setY(temp+radios);
+                    sPoints.add(0, firstPoint);//在集合的头部添加一个点
+                    int temp = snakeHead.getX();
+                    snakeHead.setX(temp + radios);
+                    score=score+eatScore;
+                    textScore.setText(score+"");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);
                 }
                 break;
@@ -361,37 +450,63 @@ public class CanvasTest extends Activity{
         AlertDialog dialog=builder.create();
         dialog.setTitle("游戏失败");
         dialog.setMessage(tishi);
+        dialog.setButton(Dialog.BUTTON_POSITIVE,
+                "再来一次", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        reStartGame();//重新开始游戏
+                    }
+                });
+        dialog.setButton(Dialog.BUTTON_NEGATIVE,
+                "退出", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        CanvasTest.this.finish();//将活动销毁
+                    }
+                });
+        dialog.setCancelable(false);
         dialog.show();
     }
 
     /**
      * 随机生成符合条件的x
      */
-    public int generate(){
+    public int generate(int min,int max){
         Random ra =new Random();
-        int x=ra.nextInt(30);
-        x=x*radios;
-        //int x= (int) (xMax*Math.random());
-        if(x>xMin && x<300){
+        int x=ra.nextInt(max)/radios*radios;
+        if(x>min && x<max){
             return x;
         }else {
-            generate();
+            generate(xMin,xMax);
         }
-        return -1;
+        return radios*10;
     }
     /**
      * 随机生成食物的坐标
      */
     public void produceFoodPosition(){
-        foodPoint.setX(generate());
-        foodPoint.setY(generate());
+        foodPoint.setX(generate(xMin,xMax));
+        foodPoint.setY(generate(yMin,yMax));
     }
     /**
      * 随机生成蛇头的初始坐标
      */
     public void produceSnakePositon(){
-        snakeHead.setX(generate());
-        snakeHead.setY(generate());
+        snakeHead.setX(generate(xMin,xMax));
+        snakeHead.setY(generate(yMin, yMax));
+    }
+    /**
+     * 重新开始游戏的时候会调用这个方法
+     */
+    public void reStartGame() {
+        sPoints.clear();
+        produceSnakePositon();
+        snakeHead.setOritation(SnakePoint.UP);
+        produceFoodPosition();
+        score=0;//分数清0
+        textScore.setText(score+"");
+        myHandler.sendEmptyMessage(RESTART);
+
     }
 
 
@@ -406,7 +521,7 @@ public class CanvasTest extends Activity{
         public CustumView(Context context) {
             super(context);//必然会访问父类的构造方法，但父类没有空参构造方法，所以必须指定一个
             paint=new Paint();
-            paint.setColor(Color.YELLOW);
+            paint.setColor(Color.BLUE);
             paint.setStrokeJoin(Paint.Join.ROUND);
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStrokeWidth(3);
@@ -429,4 +544,6 @@ public class CanvasTest extends Activity{
 
         }
     }
+
+
 }
