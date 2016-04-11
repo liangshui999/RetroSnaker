@@ -5,6 +5,7 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.res.AssetFileDescriptor;
 import android.graphics.Canvas;
 import android.graphics.Color;
@@ -40,6 +41,8 @@ public class CanvasTest extends Activity{
     @Bind(R.id.img_right) Button imgRight;
     @Bind(R.id.img_down) Button imgDown;
     @Bind(R.id.text_score) TextView textScore;//显示分数的textview
+    @Bind(R.id.btn_pause)Button pauseButton;//暂停按钮
+    @Bind(R.id.btn_set)Button setButton;//设置按钮
     private View v;//画布
     private int radios=10;//半径
 
@@ -67,7 +70,7 @@ public class CanvasTest extends Activity{
     //每吃到一次食物加的分数
     private int eatScore;
 
-    //每个多长时间重绘一次
+    //每个多长时间重绘一次（用于设置游戏速度的）
     private int time;
 
     public static final int DING_SHI=1;//定时任务的标记（用于发送消息）
@@ -86,6 +89,15 @@ public class CanvasTest extends Activity{
     //集合里面音乐的索引
     private int musicIndex;
 
+    //是否是点击了暂停
+    private boolean isPause;
+
+    //请求码
+    public static final int REQUEST_CONFINGCTIVTY=1;
+
+    //设置里面设置的音乐状态
+    private String musciConfig="开";
+
 
 
     class MyHandler extends Handler{
@@ -97,9 +109,10 @@ public class CanvasTest extends Activity{
                     framBuf.removeAllViews();
                     v=new CustumView(CanvasTest.this);
                     framBuf.addView(v);
+                    //注意下面2句话的顺序很重要，如果是反着的话，是没法清空消息的
+                    myHandler.sendEmptyMessageDelayed(DING_SHI,time);//定时发送延迟的消息
                     //移动蛇头和蛇身的坐标
                     move(snakeHead.getOritation());
-                    myHandler.sendEmptyMessageDelayed(DING_SHI,time);//定时发送延迟的消息
                     break;
                 case ORITATION_CHANGED://方向改变
                     //移动蛇头和蛇身的坐标
@@ -159,7 +172,7 @@ public class CanvasTest extends Activity{
         foodPoint=new FoodPoint(radios*20,radios*10);
        // produceFoodPosition();//随机生成的食物位置
         eatScore=10;//每吃到一个食物加10分
-        time=1000;
+        time=500;
         myHandler=new MyHandler();
         myHandler.sendEmptyMessage(DING_SHI);
         musics=new ArrayList<Integer>();
@@ -176,8 +189,15 @@ public class CanvasTest extends Activity{
                     AssetFileDescriptor file = getResources().openRawResourceFd(
                             musics.get(musicIndex++));
                     try {
-                        mp.setDataSource(file.getFileDescriptor());
-                        mp.start();
+                        //注意这里的setdatasource需要设置偏移量和长度才不会报错
+                        mp.setDataSource(file.getFileDescriptor(),file.getStartOffset(),file.getLength());
+                        mp.prepareAsync();
+                        mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                            @Override
+                            public void onPrepared(MediaPlayer mp) {
+                                mp.start();
+                            }
+                        });
                     } catch (IOException e) {
                         e.printStackTrace();
                         Log.d(tag,e.toString());
@@ -187,11 +207,18 @@ public class CanvasTest extends Activity{
                     AssetFileDescriptor file = getResources().openRawResourceFd(
                             musics.get(musicIndex++));
                     try {
-                        mp.setDataSource(file.getFileDescriptor());
-                        mp.start();
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        Log.d(tag, e.toString());
+                        //注意这里的setdatasource需要设置偏移量和长度才不会报错
+                        mp.setDataSource(file.getFileDescriptor(),file.getStartOffset(),file.getLength());
+                        mp.prepareAsync();
+                        mp.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                            @Override
+                            public void onPrepared(MediaPlayer mp) {
+                                mp.start();
+                            }
+                        });
+                    }catch (Exception e1) {
+                        e1.printStackTrace();
+                        Log.d(tag, e1.toString());
                     }
 
                 }
@@ -200,7 +227,38 @@ public class CanvasTest extends Activity{
         });
     }
 
+    /**
+     * onpause（）弹出对话框的时候也需要暂停
+     */
+    @Override
+    protected void onPause() {
+        super.onPause();
+        myHandler.removeMessages(DING_SHI);
+    }
 
+    /**
+     * onStop()将音乐关掉
+     */
+    @Override
+    protected void onStop() {
+        super.onStop();
+        if(mediaPlayer!=null){
+            mediaPlayer.pause();//关闭音乐
+        }
+        myHandler.removeMessages(DING_SHI);//暂停
+
+    }
+    /**
+     * ondestroy释放资源
+     */
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if(mediaPlayer!=null){
+            mediaPlayer.release();
+            mediaPlayer=null;
+        }
+    }
 
     /**
      * 移动蛇头和蛇身的坐标(没有改变方向之前，一直默认按一个方向走,相当于每隔1s中向上走一次)
@@ -272,27 +330,35 @@ public class CanvasTest extends Activity{
     public void isToWall(int oritation){
         switch (oritation){
             case SnakePoint.UP:
-                if(snakeHead.getY()==yMin){//碰到墙了
+                if (snakeHead.getY()==yMin){//碰到墙了
                     showDialog("撞到墙了");
+                    mediaPlayer.pause();
+
                 }
                 break;
 
             case SnakePoint.DOWN:
-                if(snakeHead.getY()==yMax){//碰到墙了
-                   showDialog("撞到墙了");
+                if (snakeHead.getY()==yMax){//碰到墙了
+                    showDialog("撞到墙了");
+                    mediaPlayer.pause();
+
                 }
                 break;
 
             case SnakePoint.LEFT:
-                if(snakeHead.getX()==xMin){//碰到墙了
+                if (snakeHead.getX()==xMin){//碰到墙了
                     showDialog("撞到墙了");
+                    mediaPlayer.pause();
+
                 }
                 break;
 
 
             case SnakePoint.RIGHT:
-                if(snakeHead.getX()==xMax){//碰到墙了
+                if (snakeHead.getX()==xMax){//碰到墙了
                     showDialog("撞到墙了");
+                    mediaPlayer.pause();
+
                 }
                 break;
         }
@@ -307,29 +373,37 @@ public class CanvasTest extends Activity{
         switch (oritation){
             case SnakePoint.UP:
                 for(SnakePoint snakePoint:sPoints){
-                    if(snakePoint.getX()==snakeHead.getX() && snakeHead.getY()==snakePoint.getY()){//撞到自己的身体了
+                    if(snakePoint.getX()==snakeHead.getX() && snakeHead.getY()== snakePoint.getY()){//撞到自己的身体了
                         showDialog("咬到自己了");
+                        mediaPlayer.pause();
+
                     }
                 }
                 break;
             case SnakePoint.DOWN:
                 for(SnakePoint snakePoint:sPoints){
-                    if(snakePoint.getX()==snakeHead.getX() && snakeHead.getY()==snakePoint.getY()){//撞到自己的身体了
+                    if(snakePoint.getX()==snakeHead.getX() && snakeHead.getY()== snakePoint.getY()){//撞到自己的身体了
                         showDialog("咬到自己了");
+                        mediaPlayer.pause();
+
                     }
                 }
                 break;
             case SnakePoint.LEFT:
                 for(SnakePoint snakePoint:sPoints){
-                    if(snakePoint.getY()==snakeHead.getY() && snakeHead.getX()==snakePoint.getX()){//撞到自己的身体了
+                    if(snakePoint.getY()==snakeHead.getY() && snakeHead.getX()== snakePoint.getX()){//撞到自己的身体了
                         showDialog("咬到自己了");
+                        mediaPlayer.pause();
+
                     }
                 }
                 break;
             case SnakePoint.RIGHT:
                 for(SnakePoint snakePoint:sPoints){
-                    if(snakePoint.getY()==snakeHead.getY() && snakeHead.getX()==snakePoint.getX()){//撞到自己的身体了
+                    if(snakePoint.getY()==snakeHead.getY() && snakeHead.getX()== snakePoint.getX()){//撞到自己的身体了
                         showDialog("咬到自己了");
+                        mediaPlayer.pause();
+
                     }
                 }
                 break;
@@ -353,7 +427,7 @@ public class CanvasTest extends Activity{
                     int temp=snakeHead.getY();
                     snakeHead.setY(temp-radios);
                     score=score+eatScore;
-                    textScore.setText(score+"");
+                    textScore.setText(score + "");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);//食物别吃了之后发送的消息
                 }
                 break;
@@ -367,7 +441,7 @@ public class CanvasTest extends Activity{
                     int temp=snakeHead.getY();
                     snakeHead.setY(temp + radios);
                     score=score+eatScore;
-                    textScore.setText(score+"");
+                    textScore.setText(score + "");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);
                 }
                 break;
@@ -381,7 +455,7 @@ public class CanvasTest extends Activity{
                     int temp = snakeHead.getX();
                     snakeHead.setX(temp - radios);
                     score=score+eatScore;
-                    textScore.setText(score+"");
+                    textScore.setText(score + "");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);
                 }
                 break;
@@ -395,7 +469,7 @@ public class CanvasTest extends Activity{
                     int temp = snakeHead.getX();
                     snakeHead.setX(temp + radios);
                     score=score+eatScore;
-                    textScore.setText(score+"");
+                    textScore.setText(score + "");
                     myHandler.sendEmptyMessage(FOOD_HAVE_EATED);
                 }
                 break;
@@ -442,10 +516,65 @@ public class CanvasTest extends Activity{
 
     }
 
+    //暂停按钮的点击事件
+    @OnClick(R.id.btn_pause) void onPauseButtonClick(){
+        if(isPause){    //已经是暂停状态了，就要打开
+            myHandler.sendEmptyMessage(DING_SHI);
+            pauseButton.setBackgroundResource(R.mipmap.start);
+            if(!musciConfig.equals("关")){    //设置里面设置的是关闭，这里就不要再打开了
+                mediaPlayer.start();
+            }
+
+            isPause=false;
+        }else{  //游戏状态，就要暂停
+            myHandler.removeMessages(DING_SHI);//把所有的定时的message都清掉
+            pauseButton.setBackgroundResource(R.mipmap.pause);//把背景图片换掉
+            if(!musciConfig.equals("关")){
+                mediaPlayer.pause();
+            }
+            isPause=true;
+        }
+    }
+
+    //设置按钮的点击事件
+    @OnClick(R.id.btn_set) void onSetButtonClick(){
+        Intent intent=new Intent(this,ConfigActivity.class);
+        startActivityForResult(intent,REQUEST_CONFINGCTIVTY);
+    }
+
+    /**
+     * 接收设置活动返回的数据，并进行设置
+     */
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode){
+            case REQUEST_CONFINGCTIVTY:
+                if(resultCode==RESULT_OK){
+                    musciConfig=data.getStringExtra(ConfigActivity.MUSCI_KEY);
+                    String speedConfig=data.getStringExtra(ConfigActivity.SPEED_KEY);
+                    if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
+                        mediaPlayer.start();
+                    }
+                    if(speedConfig.equals("快")){
+                        time=200;
+                    }else if(speedConfig.equals("慢")){
+                        time=800;
+                    }else{
+                        time=500;
+                    }
+                    if(!isPause){
+                        myHandler.sendEmptyMessage(DING_SHI);//跳到设置活动，暂停过，这里必须再打开
+                    }
+
+                }
+        }
+    }
+
     /**
      * 弹出一个对话框，提示内容不同，比如撞到墙了，咬到自己的身体了
      */
     public void showDialog(String tishi){
+        myHandler.removeMessages(DING_SHI);
         AlertDialog.Builder builder=new AlertDialog.Builder(this);
         AlertDialog dialog=builder.create();
         dialog.setTitle("游戏失败");
@@ -455,12 +584,18 @@ public class CanvasTest extends Activity{
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         reStartGame();//重新开始游戏
+                        mediaPlayer.start();
                     }
                 });
         dialog.setButton(Dialog.BUTTON_NEGATIVE,
                 "退出", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        if(mediaPlayer!=null){
+                            mediaPlayer.stop();
+                            mediaPlayer.release();
+                            mediaPlayer=null;
+                        }
                         CanvasTest.this.finish();//将活动销毁
                     }
                 });
@@ -505,13 +640,45 @@ public class CanvasTest extends Activity{
         produceFoodPosition();
         score=0;//分数清0
         textScore.setText(score+"");
-        myHandler.sendEmptyMessage(RESTART);
+        myHandler.sendEmptyMessage(DING_SHI);
 
     }
 
-
-
-
+    /**
+     * 按下返回键之后的事件
+     */
+    @Override
+    public void onBackPressed() {
+        if(mediaPlayer.isPlaying()){
+            mediaPlayer.pause();
+        }
+        myHandler.removeMessages(DING_SHI);//游戏暂停
+        AlertDialog.Builder builder=new AlertDialog.Builder(this);
+        AlertDialog dialog=builder.create();
+        dialog.setTitle("提示");
+        dialog.setMessage("确定退出游戏");
+        dialog.setButton(Dialog.BUTTON_POSITIVE,
+                "确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        if(mediaPlayer!=null){
+                            mediaPlayer.release();
+                            mediaPlayer=null;
+                        }
+                        finish();
+                    }
+                });
+        dialog.setButton(Dialog.BUTTON_NEGATIVE,
+                "取消", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        mediaPlayer.start();
+                        myHandler.sendEmptyMessage(DING_SHI);
+                    }
+                });
+        dialog.setCancelable(false);
+        dialog.show();
+    }
 
     /**
      * 自定义的view
