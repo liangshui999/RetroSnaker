@@ -1,4 +1,4 @@
-package com.example.asus_cp.retrosnaker;
+package com.example.asus_cp.activity;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -20,6 +20,9 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import com.example.asus_cp.model.FoodPoint;
+import com.example.asus_cp.model.SnakePoint;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,7 +35,7 @@ import butterknife.OnClick;
 /**
  * Created by asus-cp on 2016-04-06.
  */
-public class CanvasTest extends Activity{
+public class MainActivity extends Activity{
     @Bind(R.id.fram_buf)
     FrameLayout framBuf;
     @Bind(R.id.img_up)
@@ -43,6 +46,8 @@ public class CanvasTest extends Activity{
     @Bind(R.id.text_score) TextView textScore;//显示分数的textview
     @Bind(R.id.btn_pause)Button pauseButton;//暂停按钮
     @Bind(R.id.btn_set)Button setButton;//设置按钮
+    @Bind(R.id.btn_save)Button saveButton;//保存按钮
+    @Bind(R.id.btn_load)Button loadButton;//加载存档按钮
     private View v;//画布
     private int radios=10;//半径
 
@@ -78,7 +83,7 @@ public class CanvasTest extends Activity{
     public static final int FOOD_HAVE_EATED=3;//食物被吃了之后发送的消息的标记（请求重新生成一个食物）
     public static final int RESTART=4;//再来一次发送的消息
 
-    private String tag="CanvasTest";
+    private String tag="MainActivity";
 
     //存储音乐地址的集合
     private List<Integer>musics;
@@ -107,7 +112,7 @@ public class CanvasTest extends Activity{
                 case DING_SHI:
                     //重新绘图
                     framBuf.removeAllViews();
-                    v=new CustumView(CanvasTest.this);
+                    v=new CustumView(MainActivity.this);
                     framBuf.addView(v);
                     //注意下面2句话的顺序很重要，如果是反着的话，是没法清空消息的
                     myHandler.sendEmptyMessageDelayed(DING_SHI,time);//定时发送延迟的消息
@@ -119,20 +124,20 @@ public class CanvasTest extends Activity{
                     move(snakeHead.getOritation());
                     //重新绘图
                     framBuf.removeAllViews();
-                    v=new CustumView(CanvasTest.this);
+                    v=new CustumView(MainActivity.this);
                     framBuf.addView(v);
                     break;
                 case FOOD_HAVE_EATED://食物被吃了，请求重新生成食物
                     produceFoodPosition();
                     //重新绘图
                     framBuf.removeAllViews();
-                    v=new CustumView(CanvasTest.this);
+                    v=new CustumView(MainActivity.this);
                     framBuf.addView(v);
                     break;
                 case RESTART://再来一次
                     //重新绘图
                     framBuf.removeAllViews();
-                    v=new CustumView(CanvasTest.this);
+                    v=new CustumView(MainActivity.this);
                     framBuf.addView(v);
                     break;
             }
@@ -596,7 +601,7 @@ public class CanvasTest extends Activity{
                             mediaPlayer.release();
                             mediaPlayer=null;
                         }
-                        CanvasTest.this.finish();//将活动销毁
+                        MainActivity.this.finish();//将活动销毁
                     }
                 });
         dialog.setCancelable(false);

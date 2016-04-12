@@ -1,4 +1,4 @@
-package com.example.asus_cp.retrosnaker;
+package com.example.asus_cp.model;
 
 /**
  * 专门用来存储食物坐标的

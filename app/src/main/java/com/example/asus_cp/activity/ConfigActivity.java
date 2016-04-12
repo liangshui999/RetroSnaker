@@ -1,4 +1,4 @@
-package com.example.asus_cp.retrosnaker;
+package com.example.asus_cp.activity;
 
 import android.app.Activity;
 import android.content.Intent;
