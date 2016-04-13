@@ -22,6 +22,7 @@ import android.widget.TextView;
 
 import com.example.asus_cp.model.FoodPoint;
 import com.example.asus_cp.model.SnakePoint;
+import com.example.asus_cp.service.RecordService;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -103,6 +104,9 @@ public class MainActivity extends Activity{
     //设置里面设置的音乐状态
     private String musciConfig="开";
 
+    //和数据库打交道的recordservice
+    private RecordService recordService;
+
 
 
     class MyHandler extends Handler{
@@ -176,6 +180,8 @@ public class MainActivity extends Activity{
         //produceSnakePositon();
         foodPoint=new FoodPoint(radios*20,radios*10);
        // produceFoodPosition();//随机生成的食物位置
+
+        recordService=new RecordService();
         eatScore=10;//每吃到一个食物加10分
         time=500;
         myHandler=new MyHandler();
@@ -545,6 +551,23 @@ public class MainActivity extends Activity{
     @OnClick(R.id.btn_set) void onSetButtonClick(){
         Intent intent=new Intent(this,ConfigActivity.class);
         startActivityForResult(intent,REQUEST_CONFINGCTIVTY);
+    }
+
+
+    //保存按钮的点击事件
+    @OnClick(R.id.btn_save) void onSaveButtonClick(){
+        int time1=recordService.queryMaxTime()+1;
+        recordService.insertSnakeHead(snakeHead,time1);//保存蛇头数据
+        recordService.insertSnakeBody(sPoints,time1);//保存蛇身数据
+        recordService.insertFood(foodPoint,time1);
+        recordService.insertScore(time1,score);
+
+    }
+
+
+    //加载存档按钮的点击事件
+    @OnClick(R.id.btn_load) void onLoadButtonClick(){
+
     }
 
     /**
