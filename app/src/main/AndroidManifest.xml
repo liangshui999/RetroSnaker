@@ -20,6 +20,7 @@
             </intent-filter>
         </activity>
         <activity android:name="com.example.asus_cp.activity.ConfigActivity"/>
+        <activity android:name=".ScoreRecordActivity"/>
     </application>
 
 </manifest>

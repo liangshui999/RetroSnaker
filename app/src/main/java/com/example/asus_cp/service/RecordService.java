@@ -9,6 +9,7 @@ import android.util.Log;
 import com.example.asus_cp.db.DBConstant;
 import com.example.asus_cp.db.DBCreatHelper;
 import com.example.asus_cp.model.FoodPoint;
+import com.example.asus_cp.model.ScoreRecord;
 import com.example.asus_cp.model.SnakePoint;
 
 import java.util.ArrayList;
@@ -115,17 +116,19 @@ public class RecordService {
     }
 
     /**
-     * 向数据库中插入分数的数据
+     * 向数据库中插入分数和保存时间的数据
      * @param score 分数
      * @param time 记录次数
+     * @param date 保存时间
      */
-    public void insertScore(int time,int score){
+    public void insertScore(int time,int score,String date){
         SQLiteDatabase db=null;
         try{
             db=helper.getWritableDatabase();
             ContentValues contentValues=new ContentValues();
             contentValues.put(DBConstant.RecordTable.TIME,time);
             contentValues.put(DBConstant.Score.SCORE,score);
+            contentValues.put(DBConstant.Score.DATE,date);
             db.insert(DBConstant.Score.SCORE_TABLE_NAME,null,contentValues);
         }catch (SQLiteException e){
             Log.d(tag,e.toString());
@@ -212,7 +215,7 @@ public class RecordService {
      * @param time 记录次数
      */
     public FoodPoint queryFood(int time){
-        String sql=DBConstant.Score.SELECT_SCORE;
+        String sql=DBConstant.RecordTable.SELCET_FOOD;
         String[] args=new String[]{time+""};
         FoodPoint foodPoint= (FoodPoint) query(sql, args, new MyCursorHandler() {
             @Override
@@ -265,6 +268,48 @@ public class RecordService {
             }
         });
         return maxTime;
+    }
+
+    /**
+     * 根据记录次数查询保存时间
+     */
+    public String queryDate(int time){
+        String sql=DBConstant.Score.SELECT_DATE;
+        String[] args=new String[]{time+""};
+        String date= (String) query(sql, args, new MyCursorHandler() {
+            @Override
+            public Object handleCursor(Cursor cursor) {
+                String date1=null;
+                if(cursor.moveToNext()){
+                    date1=cursor.getString(cursor.getColumnIndex(DBConstant.Score.DATE));
+                }
+                return date1;
+            }
+        });
+        return date;
+    }
+
+    /**
+     * 查询所有的分数记录对象
+     */
+    public List<ScoreRecord> queryAllRecords(){
+        String sql=DBConstant.Score.SELECT_ALL_SCORE;
+        List<ScoreRecord>records= (List<ScoreRecord>) query(sql, null, new MyCursorHandler() {
+            @Override
+            public Object handleCursor(Cursor cursor) {
+                List<ScoreRecord>scoreRecords=new ArrayList<ScoreRecord>();
+                ScoreRecord record=null;
+                while(cursor.moveToNext()){
+                    int time=cursor.getInt(cursor.getColumnIndex(DBConstant.RecordTable.TIME));
+                    int score=cursor.getInt(cursor.getColumnIndex(DBConstant.Score.SCORE));
+                    String date=cursor.getString(cursor.getColumnIndex(DBConstant.Score.DATE));
+                    record=new ScoreRecord(time,score,date);
+                    scoreRecords.add(record);
+                }
+                return scoreRecords;
+            }
+        });
+        return records;
     }
 
 }

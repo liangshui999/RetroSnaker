@@ -15,31 +15,31 @@ public interface DBConstant {
                 "id integer primary key autoincrement," +
                 "time integer not null," +
                 "category text not null," +
-                "xvalue integer," +
-                "yvalue integer," +
-                "oritation integer" +
+                "x integer," +
+                "y integer," +
+                "fx integer" +
                 ")";
         //contentvalue的键值
         public static final String TIME="time";
         public static final String CATEGORY="category";
-        public static final String X="xvalue";
-        public static final String Y="yvalue";
-        public static final String ORITATION="oritation";
+        public static final String X="x";
+        public static final String Y="y";
+        public static final String ORITATION="fx";
 
         //记录表的名称
         public static final String RECORD_TABLE_NAME="record";
 
 
         //查询蛇头语句
-        public static final String SELECT_SNAKE_HEAD="select xvalue yvalue oritation from record where category=snakeHead " +
+        public static final String SELECT_SNAKE_HEAD="select * from record where category=\"snakeHead\" " +
                 "and time=?";
 
         //查询蛇身的语句
-        public static final String SELECT_SNAKE_BODY="select xvalue yvalue from record where category=snakeBody " +
+        public static final String SELECT_SNAKE_BODY="select * from record where category=\"snakeBody\" " +
                 "and time=?";
 
         //查询食物的语句
-        public static final String SELCET_FOOD="select xvalue yvalue from record where category=food and time=?";
+        public static final String SELCET_FOOD="select * from record where category=\"food\" and time=?";
 
     }
 
@@ -54,16 +54,25 @@ public interface DBConstant {
         public static final String CREATE_SCORE_TABLE="create table if not exists scoreTable(" +
                 "id integer primary key autoincrement," +
                 "time integer not null unique," +
-                "score integer" +
+                "score integer," +
+                "date text not null" +
                 ")";
 
         //contentvalue的键值
         public static final String SCORE="score";
         public static final String MAX_TIME="maxTime";
+        public static final String DATE="date";
 
         //查询分数的语句
         public static final String SELECT_SCORE="select score from scoreTable where time=?";
+        //查询最新记录
         public static final String SELECT_MAX_TIME="select max(time) as maxTime from scoreTable";
+
+        //查询保存时间
+        public static final String SELECT_DATE="select date from scoreTable where time=?";
+
+        //查询所有的记录
+        public static final String SELECT_ALL_SCORE="select * from scoreTable";
     }
 
 }

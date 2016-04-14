@@ -25,7 +25,9 @@ import com.example.asus_cp.model.SnakePoint;
 import com.example.asus_cp.service.RecordService;
 
 import java.io.IOException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Random;
 
@@ -100,6 +102,7 @@ public class MainActivity extends Activity{
 
     //请求码
     public static final int REQUEST_CONFINGCTIVTY=1;
+    public static final int REQUEST_SCORE_RECORD_ACTIVITY=2;
 
     //设置里面设置的音乐状态
     private String musciConfig="开";
@@ -175,10 +178,10 @@ public class MainActivity extends Activity{
             }
         });
         sPoints=new ArrayList<SnakePoint>();
-        snakeHead=new SnakePoint(radios*8,radios*30,SnakePoint.RIGHT);
+        snakeHead=new SnakePoint(radios*8,radios*10,SnakePoint.RIGHT);
 
         //produceSnakePositon();
-        foodPoint=new FoodPoint(radios*20,radios*10);
+        foodPoint=new FoodPoint(radios*15,radios*8);
        // produceFoodPosition();//随机生成的食物位置
 
         recordService=new RecordService();
@@ -550,7 +553,7 @@ public class MainActivity extends Activity{
     //设置按钮的点击事件
     @OnClick(R.id.btn_set) void onSetButtonClick(){
         Intent intent=new Intent(this,ConfigActivity.class);
-        startActivityForResult(intent,REQUEST_CONFINGCTIVTY);
+        startActivityForResult(intent, REQUEST_CONFINGCTIVTY);
     }
 
 
@@ -560,14 +563,25 @@ public class MainActivity extends Activity{
         recordService.insertSnakeHead(snakeHead,time1);//保存蛇头数据
         recordService.insertSnakeBody(sPoints,time1);//保存蛇身数据
         recordService.insertFood(foodPoint,time1);
-        recordService.insertScore(time1,score);
+        recordService.insertScore(time1, score, getCurrentTime());
 
     }
 
 
     //加载存档按钮的点击事件
     @OnClick(R.id.btn_load) void onLoadButtonClick(){
+        Intent intent=new Intent(this,ScoreRecordActivity.class);
+        startActivityForResult(intent,REQUEST_SCORE_RECORD_ACTIVITY);
+    }
 
+    /**
+     * 获取当前的系统时间，并将时间格式化
+     */
+    public String getCurrentTime(){
+        Date date=new Date();
+        String pattern="yyyy.MM.dd HH:mm:ss";
+        SimpleDateFormat simpleDateFormat=new SimpleDateFormat(pattern);
+        return simpleDateFormat.format(date);
     }
 
     /**
@@ -576,7 +590,7 @@ public class MainActivity extends Activity{
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode){
-            case REQUEST_CONFINGCTIVTY:
+            case REQUEST_CONFINGCTIVTY: //设置的acitivty返回的数据
                 if(resultCode==RESULT_OK){
                     musciConfig=data.getStringExtra(ConfigActivity.MUSCI_KEY);
                     String speedConfig=data.getStringExtra(ConfigActivity.SPEED_KEY);
@@ -593,7 +607,22 @@ public class MainActivity extends Activity{
                     if(!isPause){
                         myHandler.sendEmptyMessage(DING_SHI);//跳到设置活动，暂停过，这里必须再打开
                     }
-
+                }
+                break;
+            case REQUEST_SCORE_RECORD_ACTIVITY: //存档的activity返回的数据
+                if(resultCode==RESULT_OK){
+                    if(data!=null){
+                        //用存档的数据替换现有的数据，然后重新画图
+                        int time=data.getIntExtra(ScoreRecordActivity.TIME_KEY,-1);
+                        snakeHead=recordService.querySnakeHead(time);
+                        sPoints=recordService.querySnakeBody(time);
+                        foodPoint=recordService.queryFood(time);
+                        score=recordService.queryScore(time);
+                        textScore.setText(score+"");
+                        myHandler.sendEmptyMessage(DING_SHI);
+                    }else {
+                        myHandler.sendEmptyMessage(DING_SHI);//重新开始定时画图
+                    }
                 }
         }
     }
