@@ -14,8 +14,10 @@ import android.media.MediaPlayer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -52,7 +54,7 @@ public class MainActivity extends Activity{
     @Bind(R.id.btn_save)Button saveButton;//保存按钮
     @Bind(R.id.btn_load)Button loadButton;//加载存档按钮
     private View v;//画布
-    private int radios=10;//半径
+    private int radios;//半径
 
     //边界值，过了边界就算失败了
     private int xMin;
@@ -118,9 +120,10 @@ public class MainActivity extends Activity{
             switch (msg.what){
                 case DING_SHI:
                     //重新绘图
-                    framBuf.removeAllViews();
-                    v=new CustumView(MainActivity.this);
-                    framBuf.addView(v);
+//                    framBuf.removeAllViews();
+//                    v=new CustumView(MainActivity.this);
+//                    framBuf.addView(v);
+                    v.invalidate();//废弃原来的，然后重新调用onDraw（）方法
                     //注意下面2句话的顺序很重要，如果是反着的话，是没法清空消息的
                     myHandler.sendEmptyMessageDelayed(DING_SHI,time);//定时发送延迟的消息
                     //移动蛇头和蛇身的坐标
@@ -130,22 +133,25 @@ public class MainActivity extends Activity{
                     //移动蛇头和蛇身的坐标
                     move(snakeHead.getOritation());
                     //重新绘图
-                    framBuf.removeAllViews();
-                    v=new CustumView(MainActivity.this);
-                    framBuf.addView(v);
+//                    framBuf.removeAllViews();
+//                    v=new CustumView(MainActivity.this);
+//                    framBuf.addView(v);
+                    v.invalidate();//废弃原来的，然后重新调用onDraw（）方法
                     break;
                 case FOOD_HAVE_EATED://食物被吃了，请求重新生成食物
                     produceFoodPosition();
                     //重新绘图
-                    framBuf.removeAllViews();
-                    v=new CustumView(MainActivity.this);
-                    framBuf.addView(v);
+//                    framBuf.removeAllViews();
+//                    v=new CustumView(MainActivity.this);
+//                    framBuf.addView(v);
+                    v.invalidate();//废弃原来的，然后重新调用onDraw（）方法
                     break;
                 case RESTART://再来一次
                     //重新绘图
-                    framBuf.removeAllViews();
-                    v=new CustumView(MainActivity.this);
-                    framBuf.addView(v);
+//                    framBuf.removeAllViews();
+//                    v=new CustumView(MainActivity.this);
+//                    framBuf.addView(v);
+                    v.invalidate();//废弃原来的，然后重新调用onDraw（）方法
                     break;
             }
         }
@@ -153,6 +159,7 @@ public class MainActivity extends Activity{
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        requestWindowFeature(Window.FEATURE_NO_TITLE);//不要标题栏
         setContentView(R.layout.custom_layout);
         ButterKnife.bind(this);
         init();
@@ -162,15 +169,16 @@ public class MainActivity extends Activity{
      * 初始化方法
      */
     public void init(){
+        radios=10*getScreenDpi()/160;//将像素转换成dp，密度无关像素
         v=new CustumView(this);
         framBuf.addView(v);
-        xMin=radios*3;
-        yMin=radios*3;
+        xMin=0;
+        yMin=0;
         framBuf.post(new Runnable() {//必须通过这个方法获取宽和高，不然获取到的是空的
             @Override
             public void run() {
-                xMax = framBuf.getWidth() - radios * 3;
-                yMax = framBuf.getHeight() - radios * 3;
+                xMax = framBuf.getWidth();
+                yMax = framBuf.getHeight();
                 Log.d(tag, "xMax=" + xMax);
                 Log.d(tag, "yMax=" + yMax);
                 xMax=xMax/radios*radios;//这样处理之后xMax是radios的整数倍
@@ -571,7 +579,7 @@ public class MainActivity extends Activity{
     //加载存档按钮的点击事件
     @OnClick(R.id.btn_load) void onLoadButtonClick(){
         Intent intent=new Intent(this,ScoreRecordActivity.class);
-        startActivityForResult(intent,REQUEST_SCORE_RECORD_ACTIVITY);
+        startActivityForResult(intent, REQUEST_SCORE_RECORD_ACTIVITY);
     }
 
     /**
@@ -618,10 +626,16 @@ public class MainActivity extends Activity{
                         sPoints=recordService.querySnakeBody(time);
                         foodPoint=recordService.queryFood(time);
                         score=recordService.queryScore(time);
-                        textScore.setText(score+"");
+                        textScore.setText(score + "");
                         myHandler.sendEmptyMessage(DING_SHI);
-                    }else {
-                        myHandler.sendEmptyMessage(DING_SHI);//重新开始定时画图
+                        if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
+                            mediaPlayer.start();
+                        }
+                    }
+                }else {
+                    myHandler.sendEmptyMessage(DING_SHI);//重新开始定时画图
+                    if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
+                        mediaPlayer.start();
                     }
                 }
         }
@@ -696,9 +710,18 @@ public class MainActivity extends Activity{
         snakeHead.setOritation(SnakePoint.UP);
         produceFoodPosition();
         score=0;//分数清0
-        textScore.setText(score+"");
+        textScore.setText(score + "");
         myHandler.sendEmptyMessage(DING_SHI);
 
+    }
+
+    /**
+     * 获取屏幕dpi的方法
+     */
+    public int getScreenDpi(){
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        return metrics.densityDpi;
     }
 
     /**
@@ -745,7 +768,6 @@ public class MainActivity extends Activity{
         public CustumView(Context context) {
             super(context);//必然会访问父类的构造方法，但父类没有空参构造方法，所以必须指定一个
             paint=new Paint();
-            paint.setColor(Color.BLUE);
             paint.setStrokeJoin(Paint.Join.ROUND);
             paint.setStrokeCap(Paint.Cap.ROUND);
             paint.setStrokeWidth(3);
@@ -754,6 +776,7 @@ public class MainActivity extends Activity{
         @Override
         protected void onDraw(Canvas canvas) {
             super.onDraw(canvas);
+            paint.setColor(Color.BLUE);
             canvas.drawCircle(snakeHead.getX(), snakeHead.getY(), radios, paint);//绘制蛇头
             paint.setColor(Color.GREEN);
             for(SnakePoint point:sPoints){

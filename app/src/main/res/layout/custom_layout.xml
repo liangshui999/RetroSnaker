@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="@mipmap/psbj">
+        android:background="@mipmap/bj">
     </FrameLayout>
     <LinearLayout
         android:layout_width="match_parent"
@@ -30,14 +30,14 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/score"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     android:layout_marginTop="5dp"
                     android:layout_gravity="left"
                     />
                 <TextView
                     android:id="@+id/text_score"
                     android:text="@string/score_value"
-                    android:textSize="20sp"
+                    android:textSize="18sp"
                     android:layout_marginTop="1dp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content" />
@@ -50,13 +50,13 @@
                 android:layout_weight="1">
                 <Button
                     android:id="@+id/btn_pause"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@mipmap/start"/>
                 <Button
                     android:id="@+id/btn_save"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@drawable/save"
                     android:layout_marginLeft="10dp"/>
             </LinearLayout>
@@ -69,13 +69,13 @@
                 android:layout_marginTop="10dp">
                 <Button
                     android:id="@+id/btn_set"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@drawable/set"/>
                 <Button
                     android:id="@+id/btn_load"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
+                    android:layout_width="50dp"
+                    android:layout_height="50dp"
                     android:background="@drawable/load"
                     android:layout_marginLeft="10dp"/>
 

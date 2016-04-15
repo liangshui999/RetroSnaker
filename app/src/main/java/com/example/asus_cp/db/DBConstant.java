@@ -72,7 +72,10 @@ public interface DBConstant {
         public static final String SELECT_DATE="select date from scoreTable where time=?";
 
         //查询所有的记录
-        public static final String SELECT_ALL_SCORE="select * from scoreTable";
+        public static final String SELECT_ALL_SCORE="select * from scoreTable order by time desc";
+
+        //分页查询记录
+        public static final String SELECT_SCORE_BY_PAGE="select * from scoreTable order by time desc limit ?,?";
     }
 
 }

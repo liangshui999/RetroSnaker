@@ -312,4 +312,31 @@ public class RecordService {
         return records;
     }
 
+    /**
+     * 分页查询记录对象
+     * @param pageIndex 页面索引，从0开始
+     * @param num 每页的数量
+     */
+    public List<ScoreRecord> queryPageRecords(int pageIndex,int num){
+        String sql=DBConstant.Score.SELECT_SCORE_BY_PAGE;
+        String[] args=new String[]{pageIndex*num+"",(pageIndex+1)*num+""};
+        List<ScoreRecord>records= (List<ScoreRecord>) query(sql, args, new MyCursorHandler() {
+            @Override
+            public Object handleCursor(Cursor cursor) {
+                List<ScoreRecord>scoreRecords=new ArrayList<ScoreRecord>();
+                ScoreRecord record=null;
+                while(cursor.moveToNext()){
+                    int time=cursor.getInt(cursor.getColumnIndex(DBConstant.RecordTable.TIME));
+                    int score=cursor.getInt(cursor.getColumnIndex(DBConstant.Score.SCORE));
+                    String date=cursor.getString(cursor.getColumnIndex(DBConstant.Score.DATE));
+                    record=new ScoreRecord(time,score,date);
+                    scoreRecords.add(record);
+                }
+                return scoreRecords;
+            }
+        });
+        return records;
+    }
+
+
 }
