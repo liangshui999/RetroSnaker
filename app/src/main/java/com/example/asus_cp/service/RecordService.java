@@ -338,5 +338,71 @@ public class RecordService {
         return records;
     }
 
+    /**
+     * 删除的通用方法
+     */
+    public void delete(String sql,String[] args){
+        SQLiteDatabase db=null;
+        try{
+            db=helper.getWritableDatabase();
+            db.execSQL(sql,args);
+        }catch (SQLiteException e){
+            Log.d(tag,e.toString());
+        }finally {
+            if(db!=null){
+                db.close();
+            }
+        }
+    }
+
+    /**
+     * 删除的通用方法2
+     */
+    public void delete(String sql){
+        SQLiteDatabase db=null;
+        try{
+            db=helper.getWritableDatabase();
+            db.execSQL(sql);
+        }catch (SQLiteException e){
+            Log.d(tag,e.toString());
+        }finally {
+            if(db!=null){
+                db.close();
+            }
+        }
+    }
+
+    /**
+     * 删除单条分数记录，根据记录次数
+     * @param time 记录次数
+     */
+    public void deleteScore(int time){
+        String sql=DBConstant.Score.DELETE_SCORE_BY_TIME;
+        delete(sql,new String[]{time+""});
+    }
+
+    /**
+     * 删除所有分数记录
+     */
+    public void deleteAllScore(){
+        String sql=DBConstant.Score.DELETE_ALL_SCORE;
+        delete(sql);
+    }
+
+    /**
+     * 删除坐标表（蛇身，蛇头，食物坐标）的数据，根据记录次数
+     */
+    public void deleteRecord(int time){
+        String sql=DBConstant.RecordTable.DELETE_RECORD_BY_TIME;
+        delete(sql,new String[]{time+""});
+    }
+
+    /**
+     * 删除坐标表的所有数据
+     */
+    public void deleteAllRecord(){
+        String sql=DBConstant.RecordTable.DELETE_ALL_RECORD;
+        delete(sql);
+    }
 
 }

@@ -41,6 +41,12 @@ public interface DBConstant {
         //查询食物的语句
         public static final String SELCET_FOOD="select * from record where category=\"food\" and time=?";
 
+        //按记录次数删除数据
+        public static final String DELETE_RECORD_BY_TIME="delete from record where time=?";
+
+        //删除所有数据
+        public static final String DELETE_ALL_RECORD="delete from record where 1=1";
+
     }
 
 
@@ -76,6 +82,12 @@ public interface DBConstant {
 
         //分页查询记录
         public static final String SELECT_SCORE_BY_PAGE="select * from scoreTable order by time desc limit ?,?";
+
+        //按记录次数删除数据
+        public static final String DELETE_SCORE_BY_TIME="delete from scoreTable where time=?";
+
+        //删除所有数据
+        public static final String DELETE_ALL_SCORE="delete from scoreTable where 1=1";
     }
 
 }
