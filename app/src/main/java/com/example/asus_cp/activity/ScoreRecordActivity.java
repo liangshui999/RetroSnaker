@@ -12,6 +12,7 @@ import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.example.asus_cp.adapter.RecordAdapter;
 import com.example.asus_cp.model.ScoreRecord;
@@ -39,6 +40,9 @@ public class ScoreRecordActivity extends Activity {
     //每页条数
     private int num;
 
+    //是否显示了删除按钮
+    private boolean isDeleteVisible;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -60,8 +64,10 @@ public class ScoreRecordActivity extends Activity {
                 switch (item.getItemId()) {
                     case R.id.menu_delete:
                         //Toast.makeText(ScoreRecordActivity.this, "点击了删除按钮", Toast.LENGTH_SHORT).show();
-                        adapter=new RecordAdapter(ScoreRecordActivity.this,records,true);
+                        isDeleteVisible=true;
+                        adapter=new RecordAdapter(ScoreRecordActivity.this,records,isDeleteVisible);
                         listView.setAdapter(adapter);
+
                         break;
                     case R.id.menu_clear:
                         //Toast.makeText(ScoreRecordActivity.this, "点击了清空按钮", Toast.LENGTH_SHORT).show();
@@ -100,8 +106,10 @@ public class ScoreRecordActivity extends Activity {
 //                        Toast.makeText(ScoreRecordActivity.this, "点击了删除按钮", Toast.LENGTH_SHORT).show();
 //                    }
 //                });
-                adapter=new RecordAdapter(ScoreRecordActivity.this,records,true);
+                isDeleteVisible = true;
+                adapter = new RecordAdapter(ScoreRecordActivity.this, records, isDeleteVisible);
                 listView.setAdapter(adapter);
+
                 return true;
             }
         });
@@ -112,10 +120,29 @@ public class ScoreRecordActivity extends Activity {
         moreButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                records.addAll(recordService.queryPageRecords(++pageIndex, num));
-                adapter.notifyDataSetChanged();
+                List<ScoreRecord> temp=recordService.queryPageRecords(++pageIndex, num);
+                if(temp.size()>0){
+                    records.addAll(temp);
+                    adapter.notifyDataSetChanged();
+                }else{
+                    Toast.makeText(ScoreRecordActivity.this,"已经是最后一项了",Toast.LENGTH_SHORT).show();
+                }
+
             }
         });
     }
 
+    /**
+     * 点击返回键的反应
+     */
+    @Override
+    public void onBackPressed() {
+        if(isDeleteVisible){
+            isDeleteVisible=false;
+            adapter=new RecordAdapter(this,records,isDeleteVisible);
+            listView.setAdapter(adapter);
+        }else{
+            finish();
+        }
+    }
 }

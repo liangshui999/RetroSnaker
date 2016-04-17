@@ -602,9 +602,6 @@ public class MainActivity extends Activity{
                 if(resultCode==RESULT_OK){
                     musciConfig=data.getStringExtra(ConfigActivity.MUSCI_KEY);
                     String speedConfig=data.getStringExtra(ConfigActivity.SPEED_KEY);
-                    if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
-                        mediaPlayer.start();
-                    }
                     if(speedConfig.equals("快")){
                         time=200;
                     }else if(speedConfig.equals("慢")){
@@ -613,6 +610,9 @@ public class MainActivity extends Activity{
                         time=500;
                     }
                     if(!isPause){
+                        if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
+                            mediaPlayer.start();
+                        }
                         myHandler.sendEmptyMessage(DING_SHI);//跳到设置活动，暂停过，这里必须再打开
                     }
                 }
@@ -627,15 +627,19 @@ public class MainActivity extends Activity{
                         foodPoint=recordService.queryFood(time);
                         score=recordService.queryScore(time);
                         textScore.setText(score + "");
-                        myHandler.sendEmptyMessage(DING_SHI);
+                        if(!isPause){
+                            myHandler.sendEmptyMessage(DING_SHI);
+                            if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
+                                mediaPlayer.start();
+                            }
+                        }
+                    }
+                } else {
+                    if(!isPause){
+                        myHandler.sendEmptyMessage(DING_SHI);//重新开始定时画图
                         if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
                             mediaPlayer.start();
                         }
-                    }
-                }else {
-                    myHandler.sendEmptyMessage(DING_SHI);//重新开始定时画图
-                    if(musciConfig.equals("开")){//因为我跳到设置页面的时候，就已经把音乐关闭了
-                        mediaPlayer.start();
                     }
                 }
         }
@@ -741,9 +745,9 @@ public class MainActivity extends Activity{
                 "确定", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        if(mediaPlayer!=null){
+                        if (mediaPlayer != null) {
                             mediaPlayer.release();
-                            mediaPlayer=null;
+                            mediaPlayer = null;
                         }
                         finish();
                     }
@@ -752,8 +756,11 @@ public class MainActivity extends Activity{
                 "取消", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        mediaPlayer.start();
-                        myHandler.sendEmptyMessage(DING_SHI);
+                        if (!isPause) {
+                            mediaPlayer.start();
+                            myHandler.sendEmptyMessage(DING_SHI);
+                        }
+
                     }
                 });
         dialog.setCancelable(false);

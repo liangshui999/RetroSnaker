@@ -25,7 +25,7 @@ public class ConfigActivity extends Activity {
     @Bind(R.id.btn_cancel_set)Button cancelButton;
 
     //速度的数据源
-    private String[] speeds={"快","正常","慢"};
+    private String[] speeds={"正常","快","慢"};
 
     //背景音乐选项的数组
     private String[] backgroundMusics={"开","关"};
@@ -78,7 +78,7 @@ public class ConfigActivity extends Activity {
         spinBackgrondMusic.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                selectedMusic=backgroundMusics[position];
+                selectedMusic = backgroundMusics[position];
             }
 
             @Override
@@ -92,14 +92,23 @@ public class ConfigActivity extends Activity {
     //确定按钮的点击事件
     @OnClick(R.id.btn_sure_set) void onSetButtonClick(){
         Intent intent=new Intent();
-        intent.putExtra(SPEED_KEY,selectedSpeed);
-        intent.putExtra(MUSCI_KEY,selectedMusic);
-        setResult(RESULT_OK,intent);//返回数据给上一个活动
+        intent.putExtra(SPEED_KEY, selectedSpeed);
+        intent.putExtra(MUSCI_KEY, selectedMusic);
+        setResult(RESULT_OK, intent);//返回数据给上一个活动
         finish();
     }
     //点返回键返回的事件
     @Override
     public void onBackPressed() {
+        Intent intent=new Intent();
+        intent.putExtra(SPEED_KEY,selectedSpeed);
+        intent.putExtra(MUSCI_KEY,selectedMusic);
+        setResult(RESULT_OK,intent);//返回数据给上一个活动
+        finish();
+    }
+
+    //取消按钮的点击事件
+    @OnClick(R.id.btn_cancel_set) void cancelButtonOnClick(){
         Intent intent=new Intent();
         intent.putExtra(SPEED_KEY,selectedSpeed);
         intent.putExtra(MUSCI_KEY,selectedMusic);
